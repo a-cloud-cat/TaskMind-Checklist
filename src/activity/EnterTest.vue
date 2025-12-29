@@ -49,117 +49,146 @@ async function handleRegister() {
   }
 }
 </script>
+
 <template>
+  <Navbar />
+  <div class="root-container">
+    <div class="blank-box"></div>
+    <div class="login-box">
+      <h2 class="login-title">登录</h2>
 
-  <div class="login-container">
-    <div class="input-group">
-      <div class="input-item">
-        <input type="text" placeholder="请输入用户名" class="input-field" v-model="username">
+      <input
+          type="text"
+          placeholder="请输入用户名"
+          class="input-item"
+          v-model="username"
+      >
+      <input
+          type="password"
+          placeholder="请输入密码"
+          class="input-item"
+          v-model="password"
+      >
+      <div class="register-tip">
+        No account? <span class="sign-in" @click.prevent="handleRegister">Sign in</span>
       </div>
-      <div class="input-item">
-        <input type="password" placeholder="请输入密码" class="input-field" v-model="password">
+      <button class="next-btn" @click="submitForm">Next</button>
+      <div class="agreement-wrap">
+        <input type="checkbox" id="agreement" class="checkbox">
+        <label for="agreement" class="agreement-text">
+          我已阅读并同意
+          <router-link to="/PrivacyPolicy_UserAgreement" class="link">用户协议</router-link>
+          和
+          <router-link to="/PrivacyPolicy_UserAgreement" class="link">隐私政策</router-link>
+        </label>
       </div>
-    </div>
-
-    <div class="account-link">
-      No account?
-      <a href="#" class="signin-link" @click.prevent="handleRegister">Sign in</a>
-    </div>
-
-    <button class="next-btn" @click="submitForm">Next</button>
-
-    <div class="agreement">
-      <input type="checkbox" id="agreement" class="checkbox">
-      <label for="agreement" class="agreement-text">
-        我已阅读并同意
-        <router-link to="/PrivacyPolicy_UserAgreement" class="agreement-link">用户协议</router-link>
-        和
-        <router-link to="/PrivacyPolicy_UserAgreement" class="agreement-link">隐私政策</router-link>
-      </label>
     </div>
   </div>
 </template>
 
-
 <style scoped>
-
-.login-container {
-  background-color: aliceblue;
-  width: 25vw;
-  border-radius: 1.5rem;
-  margin: 40vh auto 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2vh;
-}
-
-.input-group {
-  margin-top: 4vh;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5vh;
-}
-
-.input-item {
-  width: 100%;
-}
-
-.input-field {
-  width: 100%;
-  height: 6vh;
-  padding: 0 1vw;
-  border: 1px solid #ddd;
-  border-radius: 0.5rem;
-  background-color: #fff;
-  color: #333;
-  font-size: 1rem;
+* {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-.input-field:focus {
-  outline: none;
-  border-color: #fc00ff;
+.root-container {
+  position: relative;
+  width: 100vw;
+  min-height: calc(100vh - 56px);
+  background: linear-gradient(180deg, #9999ff 0%, #ffff99 100%);
+  overflow: hidden;
 }
 
-.account-link {
+.login-box {
+  position: absolute;
+  top: 50%;
+  left: 75%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  height: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background-color: #f0f8ff;
+  padding: 24px 20px;
+  border-radius: 20px;
+  z-index: 2;
+}
+
+.login-title {
   text-align: center;
-  margin-top: 1vh;
+  color: #333;
+  margin-bottom: 20px;
+  font-size: 24px;
 }
 
-.signin-link {
-  color: #fc00ff;
+.blank-box {
+  position: absolute;
+  top: 50%;
+  left: 60%;
+  transform: translate(-50%, -50%);
+  width: 1000px;
+  height: 600px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  z-index: 1;
+}
+
+.input-item {
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  background-color: #ffffff;
+  font-size: 14px;
+  outline: none;
+}
+
+.input-item::placeholder {
+  color: #cccccc;
+}
+
+.register-tip {
+  text-align: center;
+  font-size: 12px;
+  color: #888888;
+}
+
+.sign-in {
+  color: #ff3366;
   font-weight: 600;
   cursor: pointer;
 }
 
 .next-btn {
-  width: 100%;
-  height: 7vh;
-  background: linear-gradient(90deg, #fc00ff, #00dbde);
+  height: 50px;
   border: none;
-  border-radius: 0.5rem;
-  color: #fff;
-  font-size: 1.1rem;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #ff00cc 0%, #00ccff 100%);
+  color: #ffffff;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.agreement {
+.agreement-wrap {
   display: flex;
   align-items: center;
-  gap: 0.5vw;
-  margin-top: 2vh;
-  font-size: 0.85rem;
-  color: #666;
+  gap: 6px;
+  font-size: 10px;
+  color: #999999;
 }
 
 .checkbox {
-  width: 1.2rem;
-  height: 1.2rem;
-  accent-color: #fc00ff;
+  width: 12px;
+  height: 12px;
+  accent-color: #ff00cc;
 }
 
-.agreement-link {
-  color: #00dbde;
+.link {
+  color: #0099ff;
+  text-decoration: none;
 }
 </style>
