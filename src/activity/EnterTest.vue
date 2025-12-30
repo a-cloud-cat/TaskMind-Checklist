@@ -1,55 +1,3 @@
-<script setup lang="ts">
-import axios from 'axios'
-import router from '../router/index.ts'
-
-let username = ''
-let password = ''
-
-async function submitForm() {
-  const checkbox = document.getElementById('agreement') as HTMLInputElement;
-  if (!checkbox.checked) {
-    alert('请同意用户协议');
-    return;
-  }
-
-  if (!username.trim() || !password.trim()) {
-    alert('请输入完整的用户名和密码');
-    return;
-  }
-
-  try {
-    const response = await axios.post('http://localhost:8080/api/user/login', {
-      username,
-      password
-    });
-    const result = response.data;
-    alert(result);
-    if (result === '登录成功') {
-      router.push('/ActivityMain');
-    }
-  } catch (error) {
-    alert('登录失败，请检查账号密码或网络！');
-  }
-}
-
-async function handleRegister() {
-  if (!username.trim() || !password.trim()) {
-    alert('请输入完整的用户名和密码');
-    return;
-  }
-
-  try {
-    const response = await axios.post('http://localhost:8080/api/user/register', {
-      username,
-      password
-    });
-    alert(response.data);
-  } catch (error) {
-    alert('注册失败，请检查网络或用户名是否已存在！');
-  }
-}
-</script>
-
 <template>
   <Navbar />
   <div class="root-container">
@@ -74,7 +22,7 @@ async function handleRegister() {
       </div>
       <button class="next-btn" @click="submitForm">Next</button>
       <div class="agreement-wrap">
-        <input type="checkbox" id="agreement" class="checkbox">
+        <input type="checkbox" id="agreement" class="checkbox" v-model="isAgree">
         <label for="agreement" class="agreement-text">
           我已阅读并同意
           <router-link to="/PrivacyPolicy_UserAgreement" class="link">用户协议</router-link>
@@ -85,6 +33,69 @@ async function handleRegister() {
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+import Navbar from '../components/Navbar.vue'
+import { useUserStore } from '../store/user'
+
+const username = ref('')
+const password = ref('')
+const isAgree = ref(false)
+const router = useRouter()
+const userStore = useUserStore()
+
+async function submitForm() {
+  if (!isAgree.value) {
+    alert('请同意用户协议');
+    return;
+  }
+
+  if (!username.value.trim() || !password.value.trim()) {
+    alert('请输入完整的用户名和密码');
+    return;
+  }
+
+  try {
+    const response = await axios.post('http://localhost:8080/api/user/login', {
+      username: username.value,
+      password: password.value
+    });
+    const result = response.data;
+    alert(result);
+    if (result === '登录成功' || response.data.code === 200) {
+      userStore.login({ username: username.value, ...response.data.data })
+      router.push('/ActivityMain');
+      username.value = ''
+      password.value = ''
+      isAgree.value = false
+    }
+  } catch (error) {
+    alert('登录失败，请检查账号密码或网络！');
+  }
+}
+
+async function handleRegister() {
+  if (!username.value.trim() || !password.value.trim()) {
+    alert('请输入完整的用户名和密码');
+    return;
+  }
+
+  try {
+    const response = await axios.post('http://localhost:8080/api/user/register', {
+      username: username.value,
+      password: password.value
+    });
+    alert(response.data);
+    username.value = ''
+    password.value = ''
+  } catch (error) {
+    alert('注册失败，请检查网络或用户名是否已存在！');
+  }
+}
+</script>
 
 <style scoped>
 * {

@@ -26,20 +26,19 @@
         </div>
       </div>
 
-      <div class="menu-item login-item" @click="toggleLoginDropdown">
+      <div class="menu-item" v-if="userStore.isLogin" @click="toggleLogoutDropdown">
+        <div class="avatar">
+          {{ userStore.userInfo?.username?.charAt(0).toUpperCase() || 'U' }}
+        </div>
+        <div class="dropdown login-dropdown" v-show="showLogoutDropdown">
+          <div class="dropdown-item" @click="handlePersonalCenter">个人中心</div>
+          <div class="dropdown-item" @click="handleLogout">退出账号</div>
+        </div>
+      </div>
+
+      <div class="menu-item login-item" v-else @click="handleLoginClick">
         <div class="avatar">👤</div>
         <span class="login-text">登录</span>
-        <div class="dropdown login-dropdown" v-show="showLoginDropdown">
-          <div class="dropdown-item" @click="goToLogin('admin')">
-            管理员登录
-          </div>
-          <div class="dropdown-item" @click="goToLogin('user')">
-            用户登录
-          </div>
-          <div class="dropdown-item" @click="goToLogin('vip')">
-            VIP登录
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -48,32 +47,45 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '../store/user'
 
 const router = useRouter()
-
 const showSettingDropdown = ref(false)
-const showLoginDropdown = ref(false)
+const userStore = useUserStore()
+const showLogoutDropdown = ref(false)
 
 const toggleSettingDropdown = () => {
   showSettingDropdown.value = !showSettingDropdown.value
-  showLoginDropdown.value = false
+  showLogoutDropdown.value = false
 }
 
-const toggleLoginDropdown = () => {
-  showLoginDropdown.value = !showLoginDropdown.value
+const handleLoginClick = () => {
+  router.push('/next')
+}
+
+const toggleLogoutDropdown = () => {
+  showLogoutDropdown.value = !showLogoutDropdown.value
   showSettingDropdown.value = false
 }
 
-const goToLogin = (type: string) => {
-  router.push({ path: '/next', query: { type } })
-  showLoginDropdown.value = false
+const handlePersonalCenter = () => {
+  router.push('/ActivityMain')
+  showLogoutDropdown.value = false
+}
+
+const handleLogout = () => {
+  userStore.logout()
+  showLogoutDropdown.value = false
+  router.push('/')
 }
 
 document.addEventListener('click', (e) => {
   const target = e.target as HTMLElement
-  if (!target.closest('.setting-item') && !target.closest('.login-item')) {
+  const isSetting = target.closest('.setting-item')
+  const isLogout = target.closest('.menu-item:not(.login-item):not(.setting-item)')
+  if (!isSetting && !isLogout) {
     showSettingDropdown.value = false
-    showLoginDropdown.value = false
+    showLogoutDropdown.value = false
   }
 })
 </script>
