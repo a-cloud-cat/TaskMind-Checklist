@@ -3,7 +3,7 @@
     <div class="admin-header">
       <h2>管理员控制台</h2>
       <div class="admin-info">
-        <span>当前登录：{{ userStore.userInfo.username }}（管理员）</span>
+        <span>当前登录：{{ userStore.userInfo?.username }}（管理员）</span>
         <button @click="handleLogout" class="logout-btn">退出登录</button>
       </div>
     </div>
@@ -17,6 +17,7 @@
           <th>用户名（账户）</th>
           <th>用户角色</th>
           <th>是否正常使用</th>
+          <th>是否是会员</th>
         </tr>
         </thead>
         <tbody>
@@ -33,9 +34,19 @@
                 {{ user.status === 'normal' ? '正常' : '封禁' }}
               </span>
           </td>
+          <!-- 恢复原有标签样式（和“是否正常使用”保持一致） -->
+          <td>
+              <span
+                  class="status-tag"
+                  :class="{ vip: user.isVip, nonVip: !user.isVip }"
+                  @click="toggleVipStatus(user.id, user.isVip)"
+              >
+                {{ user.isVip ? '是会员' : '非会员' }}
+              </span>
+          </td>
         </tr>
         <tr v-if="userList.length === 0">
-          <td colspan="4" class="empty-tip">暂无用户账户数据</td>
+          <td colspan="5" class="empty-tip">暂无用户账户数据</td>
         </tr>
         </tbody>
       </table>
@@ -46,16 +57,24 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '../store/user'
+import { useUserStore } from '../store/userStore'
 import axios from 'axios'
+
+interface User {
+  id: number
+  username: string
+  user_type: 'admin' | 'user'
+  status: 'normal' | 'banned'
+  isVip: boolean
+}
 
 const userStore = useUserStore()
 const router = useRouter()
-const userList = ref([])
+const userList = ref<User[]>([])
 
 onMounted(async () => {
-  const currentUserType = userStore.userInfo.user_type
-  if (!currentUserType || currentUserType !== 'admin') {
+  userStore.initUserInfo()
+  if (userStore.userInfo?.user_type !== 'admin') {
     alert('无管理员权限，禁止访问！')
     router.push('/ActivityMain')
     return
@@ -63,42 +82,51 @@ onMounted(async () => {
   await fetchAllUserList()
 })
 
+// 获取用户列表（补全前端会员状态）
 const fetchAllUserList = async () => {
   try {
-    const res = await axios.get('http://localhost:8080/api/user/admin/list')
+    const res = await axios.get<{ code: number; data: Omit<User, 'isVip'>[] }>(
+        'http://localhost:8080/api/user/admin/list'
+    )
     if (res.data.code === 200) {
-      userList.value = res.data.data
+      userList.value = res.data.data.map(user => ({
+        ...user,
+        // 从localStorage读取会员状态（转布尔值，默认false）
+        isVip: localStorage.getItem(`userVip_${user.id}`) === 'true'
+      }))
     }
   } catch (err) {
     console.error('获取用户列表失败：', err)
-    alert('获取用户列表失败，请检查后端接口！')
+    alert('获取用户列表失败！')
   }
 }
 
-const toggleUserStatus = async (userId: number, currentStatus: string) => {
+// 切换用户状态（保留原有逻辑）
+const toggleUserStatus = async (userId: number, currentStatus: User['status']) => {
   try {
-    let apiUrl = ''
-    let tip = ''
-    if (currentStatus === 'normal') {
-      apiUrl = 'http://localhost:8080/api/user/admin/ban'
-      tip = '封禁'
-    } else {
-      apiUrl = 'http://localhost:8080/api/user/admin/unban'
-      tip = '解封'
-    }
-    const res = await axios.post(apiUrl, {}, {
-      params: { userId }
-    })
+    const apiUrl = currentStatus === 'normal'
+        ? 'http://localhost:8080/api/user/admin/ban'
+        : 'http://localhost:8080/api/user/admin/unban'
+    const res = await axios.post(apiUrl, {}, { params: { userId } })
     if (res.data.code === 200) {
-      alert(`${tip}成功！`)
+      alert(`${currentStatus === 'normal' ? '封禁' : '解封'}成功！`)
       await fetchAllUserList()
-    } else {
-      alert(`${tip}失败：${res.data.message}`)
     }
   } catch (err) {
     console.error('切换状态失败：', err)
-    alert('切换用户状态失败，请检查后端服务！')
+    alert('切换用户状态失败！')
   }
+}
+
+// 切换会员状态（修复存储逻辑）
+const toggleVipStatus = (userId: number, currentIsVip: boolean) => {
+  const newIsVip = !currentIsVip
+  // 存储到localStorage（确保是字符串，避免类型问题）
+  localStorage.setItem(`userVip_${userId}`, newIsVip.toString())
+  // 更新列表状态
+  const targetUser = userList.value.find(u => u.id === userId)
+  if (targetUser) targetUser.isVip = newIsVip
+  alert(`已${newIsVip ? '开通' : '取消'}该用户会员！`)
 }
 
 const handleLogout = () => {
@@ -108,6 +136,7 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
+/* 恢复原有美观样式 */
 .admin-container {
   width: 95%;
   margin: 0 auto;
@@ -192,6 +221,7 @@ const handleLogout = () => {
   font-size: 14px;
   padding: 30px 0;
 }
+/* 统一状态/会员标签样式（恢复原有美观度） */
 .status-tag {
   padding: 4px 8px;
   border-radius: 4px;
@@ -211,5 +241,20 @@ const handleLogout = () => {
 }
 .status-tag.banned:hover {
   background-color: #f5c6cb;
+}
+/* 会员标签样式（和原有状态标签统一） */
+.status-tag.vip {
+  background-color: #cce5ff;
+  color: #004085;
+}
+.status-tag.vip:hover {
+  background-color: #b8daff;
+}
+.status-tag.nonVip {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+.status-tag.nonVip:hover {
+  background-color: #d6d8db;
 }
 </style>

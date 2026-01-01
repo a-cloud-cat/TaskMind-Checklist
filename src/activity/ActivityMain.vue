@@ -38,10 +38,10 @@
 
         <div class="task-list-btn">VIP功能</div>
         <div class="task-filter">
-          <button class="flowchart-btn filter-item" @click="switchToFlowChart">
+          <button class="flowchart-btn filter-item" @click="handleFlowChartClick">
             <span class="left_bar-font">流程图</span>
           </button>
-          <button class="recycle-bin-btn filter-item" @click="switchToRecycleBin">
+          <button class="recycle-bin-btn filter-item" @click="handleRecycleBinClick">
             <span class="left_bar-font">回收站</span>
           </button>
         </div>
@@ -73,66 +73,66 @@ import TaskList from '../task/TaskList.vue'
 import NewTaskModal from '../task/NewTaskModal.vue'
 import RecycleBin from '../leftBarActivity/RecycleBin.vue'
 import { useTaskStore } from '../store/taskStore'
+import { useUserStore } from '../store/userStore'
 
 const activePage = ref('flowchart')
 const activeFilter = ref('all')
 const showNewTaskModal = ref(false)
 const taskStore = useTaskStore()
+const userStore = useUserStore()
 
 onMounted(() => {
+  userStore.initUserInfo()
   taskStore.fetchTaskList()
 })
 
-const switchToFlowChart = () => {
-  activePage.value = 'flowchart'
+// 修复：增加默认值，防止isVip为undefined
+const handleFlowChartClick = () => {
+  const isVip = userStore.userInfo?.isVip ?? false
+  if (isVip) {
+    activePage.value = 'flowchart'
+  } else {
+    alert('你不是VIP会员，无法使用该功能！')
+  }
 }
 
-const switchToRecycle = () => {
-  activePage.value = 'recycle'
+const handleRecycleBinClick = () => {
+  const isVip = userStore.userInfo?.isVip ?? false
+  if (isVip) {
+    activePage.value = 'recycle'
+  } else {
+    alert('你不是VIP会员，无法使用该功能！')
+  }
 }
 
+// 其他原有方法
 const changeFilter = (filter: string) => {
   activeFilter.value = filter
   activePage.value = 'taskList'
 }
-
-const openNewTaskModal = () => {
-  showNewTaskModal.value = true
-}
-
-const closeNewTaskModal = () => {
-  showNewTaskModal.value = false
-}
-
+const openNewTaskModal = () => { showNewTaskModal.value = true }
+const closeNewTaskModal = () => { showNewTaskModal.value = false }
 const saveNewTask = (newTask: any) => {
-  if (newTask.type === 'memo') {
-    newTask.status = 'memo'
-    taskStore.addTask(newTask)
-    activeFilter.value = 'memo'
-    activePage.value = 'taskList'
-  } else if (newTask.type === 'task') {
-    newTask.status = 'doing'
-    taskStore.addTask(newTask)
-    activeFilter.value = 'doing'
-    activePage.value = 'taskList'
-  }
+  newTask.status = newTask.type === 'memo' ? 'memo' : 'doing'
+  taskStore.addTask(newTask)
+  activeFilter.value = newTask.type === 'memo' ? 'memo' : 'doing'
+  activePage.value = 'taskList'
   showNewTaskModal.value = false
 }
 </script>
 
 <style scoped>
+/* 原有样式不变 */
 .activity-main {
   display: flex;
   height: calc(100vh - 56px);
 }
-
 .left-bar {
   width: 220px;
   background-color: #2b2b2b;
   color: #fff;
   padding: 20px 0;
 }
-
 .task-list-btn {
   width: 100%;
   height: 40px;
@@ -145,15 +145,12 @@ const saveNewTask = (newTask: any) => {
   border: none;
   color: #fff;
 }
-
 .left_bar-font {
   font-size: 14px;
 }
-
 .task-filter {
   margin: 20px 10px;
 }
-
 .filter-item {
   padding: 8px 10px;
   cursor: pointer;
@@ -167,16 +164,13 @@ const saveNewTask = (newTask: any) => {
   text-align: left;
   font-size: 14px;
 }
-
 .filter-item.active {
   background-color: #00ff88;
   color: #000;
 }
-
 .filter-item:hover:not(.active) {
   background-color: #3b3b3b;
 }
-
 .flowchart-btn, .recycle-bin-btn {
   width: 100%;
   height: auto;
@@ -186,7 +180,6 @@ const saveNewTask = (newTask: any) => {
   padding: 8px 10px;
   margin: 5px 0;
 }
-
 .right-content {
   flex: 1;
   padding: 20px;

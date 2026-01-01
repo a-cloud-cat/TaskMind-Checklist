@@ -1,6 +1,7 @@
 <template>
   <Navbar />
   <div class="root-container">
+    <!-- 空白区域（替换为图片） -->
     <div class="blank-box"></div>
     <div class="login-box">
       <h2 class="login-title">登录</h2>
@@ -118,6 +119,7 @@ async function submitForm() {
   min-height: calc(100vh - 56px);
   background: linear-gradient(180deg, #9999ff 0%, #ffff99 100%);
   overflow: hidden;
+  z-index: 0;
 }
 .login-box {
   position: absolute;
@@ -140,16 +142,23 @@ async function submitForm() {
   margin-bottom: 20px;
   font-size: 24px;
 }
+/* 核心修改：left从60%改为55%（左移），可根据需要调更小（如50%/45%） */
 .blank-box {
   position: absolute;
   top: 50%;
-  left: 60%;
+  left: 55%; /* 关键：减小left值实现左移，数值越小越靠左 */
   transform: translate(-50%, -50%);
   width: 1000px;
   height: 600px;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-image: url('./../assets/enterPicture.png');
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #ff000033; /* 兜底色：路径错时显示半透红，调试完可删除 */
   border-radius: 16px;
   z-index: 1;
+  display: block;
+  opacity: 1;
 }
 .input-item {
   height: 48px;
