@@ -5,12 +5,10 @@
       <button class="empty-btn" @click="emptyRecycleBin">清空回收站</button>
     </div>
 
-    <!-- 无删除任务时显示 -->
     <div class="empty-tip" v-if="deletedTasks.length === 0">
       回收站为空，暂无已删除任务
     </div>
 
-    <!-- 已删除任务列表 -->
     <div class="recycle-task-list" v-else>
       <div class="task-item" v-for="task in deletedTasks" :key="task.id">
         <div class="task-info">
@@ -29,14 +27,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useTaskStore } from '../store/taskStore'
+import { useTaskStore } from '../store/taskStore.ts'
 
 const taskStore = useTaskStore()
 
-// 获取回收站任务
 const deletedTasks = computed(() => taskStore.deletedTasks)
 
-// 状态文本映射
 const getStatusText = (status: string) => {
   const statusMap = {
     todo: '待办',
@@ -46,24 +42,20 @@ const getStatusText = (status: string) => {
   return statusMap[status as keyof typeof statusMap] || status
 }
 
-// 格式化删除时间（简单处理，实际可根据需求优化）
 const formatDeleteTime = (deleteTime: string | number | Date) => {
   return new Date(deleteTime).toLocaleString()
 }
 
-// 恢复任务
 const restoreTask = (taskId: string | number) => {
   taskStore.restoreTask(taskId)
 }
 
-// 彻底删除任务
 const deleteTaskPermanently = (taskId: string | number) => {
   if (confirm('确定要彻底删除该任务吗？此操作不可恢复！')) {
     taskStore.deleteTaskPermanently(taskId)
   }
 }
 
-// 清空回收站
 const emptyRecycleBin = () => {
   if (confirm('确定要清空回收站吗？所有已删除任务将永久消失！')) {
     taskStore.emptyRecycleBin()

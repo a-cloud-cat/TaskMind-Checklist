@@ -1,103 +1,130 @@
 import { defineStore } from 'pinia'
-// 假设原有接口定义，若不存在可自行添加
-interface Task {
+
+export interface Task {
     id: string | number
     title: string
-    status: 'todo' | 'doing' | 'done'
-    [key: string]: any // 兼容其他字段
+    desc: string
+    priority: 'high' | 'medium' | 'low'
+    dueDate: string
+    status: 'memo' | 'doing' | 'done'
+    type: 'memo' | 'task'
 }
 
-// 扩展任务接口，添加删除时间字段
-interface DeletedTask extends Task {
-    deleteTime: string | number | Date
+export interface DeletedTask extends Task {
+    deleteTime: string
 }
 
 export const useTaskStore = defineStore('task', {
     state: () => ({
         taskList: [] as Task[],
-        // 新增：回收站任务列表
-        deletedTasks: [] as DeletedTask[]
+        deletedTasks: [] as DeletedTask[],
+        currentSortType: '' as 'priority' | 'dueDate' | ''
     }),
+
     actions: {
-        // 原有方法：获取任务列表（不变）
         fetchTaskList() {
-            // 原有逻辑，如接口请求等
-            // 示例：this.taskList = 接口返回数据
-        },
-
-        // 原有方法：添加任务（不变）
-        addTask(newTask: Task) {
-            // 原有逻辑，如接口请求+本地状态更新
-            this.taskList.unshift(newTask)
-        },
-
-        // 原有方法：删除任务（修改逻辑，将删除的任务移到回收站）
-        deleteTask(taskId: string | number) {
-            // 1. 查找要删除的任务
-            const taskIndex = this.taskList.findIndex(task => task.id === taskId)
-            if (taskIndex === -1) return
-
-            // 2. 移除任务并添加到回收站（添加删除时间）
-            const deletedTask = {
-                ...this.taskList[taskIndex],
-                deleteTime: new Date()
-            } as DeletedTask
-            this.taskList.splice(taskIndex, 1)
-            this.deletedTasks.unshift(deletedTask)
-
-            // 3. 原有接口请求逻辑（不变）
-            try {
-                // deleteTaskApi(taskId) // 原有接口调用
-            } catch (error) {
-                // 接口失败回滚（修改回滚逻辑，同时恢复回收站）
-                this.taskList.splice(taskIndex, 0, deletedTask)
-                this.deletedTasks.shift()
-                console.error('删除任务失败：', error)
+            const savedTasks = localStorage.getItem('taskList')
+            const savedDeletedTasks = localStorage.getItem('deletedTasks')
+            if (savedTasks) {
+                this.taskList = JSON.parse(savedTasks) as Task[]
+            }
+            if (savedDeletedTasks) {
+                this.deletedTasks = JSON.parse(savedDeletedTasks) as DeletedTask[]
             }
         },
 
-        // 新增：恢复任务（从回收站移回任务列表）
+        addTask(newTask: Task) {
+            this.taskList.unshift(newTask)
+            this.saveToLocalStorage()
+        },
+
+        editTask(updatedTask: Task) {
+            const taskIndex = this.taskList.findIndex(t => t.id === updatedTask.id)
+            if (taskIndex !== -1) {
+                this.taskList[taskIndex] = updatedTask
+                this.saveToLocalStorage()
+            }
+        },
+
+        toggleTaskStatus(taskId: string | number, forceDone?: boolean) {
+            const task = this.taskList.find(t => t.id === taskId)
+            if (task) {
+                if (forceDone) {
+                    task.status = 'done'
+                } else {
+                    task.status = task.status === 'memo'
+                        ? 'doing'
+                        : task.status === 'doing'
+                            ? 'done'
+                            : 'memo'
+                }
+                this.saveToLocalStorage()
+            }
+        },
+
+        deleteTask(taskId: string | number) {
+            const taskIndex = this.taskList.findIndex(t => t.id === taskId)
+            if (taskIndex === -1) return
+
+            const targetTask = this.taskList[taskIndex]!
+            const deletedTask: DeletedTask = {
+                ...targetTask,
+                deleteTime: new Date().toISOString()
+            }
+
+            this.taskList.splice(taskIndex, 1)
+            this.deletedTasks.unshift(deletedTask)
+            this.saveToLocalStorage()
+        },
+
         restoreTask(taskId: string | number) {
-            const taskIndex = this.deletedTasks.findIndex(task => task.id === taskId)
+            const taskIndex = this.deletedTasks.findIndex(t => t.id === taskId)
             if (taskIndex === -1) return
 
-            // 移除回收站任务并添加到任务列表
-            const restoredTask = this.deletedTasks[taskIndex]
-            // 删除deleteTime字段，恢复为普通任务
-            const { deleteTime, ...task } = restoredTask
-            this.deletedTasks.splice(taskIndex, 1)
-            this.taskList.unshift(task as Task)
+            const targetDeletedTask = this.deletedTasks[taskIndex]!
+            const { deleteTime, ...normalTask } = targetDeletedTask
 
-            // 可选：调用接口同步恢复状态（根据实际需求添加）
-            // restoreTaskApi(taskId).catch(error => {
-            //   // 接口失败回滚
-            //   this.deletedTasks.splice(taskIndex, 0, restoredTask)
-            //   this.taskList.shift()
-            //   console.error('恢复任务失败：', error)
-            // })
+            this.deletedTasks.splice(taskIndex, 1)
+            this.taskList.unshift(normalTask)
+            this.saveToLocalStorage()
         },
 
-        // 新增：彻底删除任务（从回收站移除）
         deleteTaskPermanently(taskId: string | number) {
-            const taskIndex = this.deletedTasks.findIndex(task => task.id === taskId)
+            const taskIndex = this.deletedTasks.findIndex(t => t.id === taskId)
             if (taskIndex === -1) return
 
             this.deletedTasks.splice(taskIndex, 1)
-
-            // 可选：调用接口同步彻底删除状态（根据实际需求添加）
-            // deleteTaskPermanentlyApi(taskId).catch(error => {
-            //   console.error('彻底删除任务失败：', error)
-            // })
+            this.saveToLocalStorage()
         },
 
-        // 新增：清空回收站
         emptyRecycleBin() {
             this.deletedTasks = []
+            this.saveToLocalStorage()
+        },
 
-            // 可选：调用接口同步清空状态（根据实际需求添加）
-            // emptyRecycleBinApi().catch(error => {
-            //   console.error('清空回收站失败：', error)
-            // })
+        sortTasks(type: 'priority' | 'dueDate') {
+            this.currentSortType = type
+            const newTaskList = [...this.taskList]
+
+            if (type === 'priority') {
+                const priorityWeightMap = { high: 3, medium: 2, low: 1 }
+                newTaskList.sort((a, b) => priorityWeightMap[b.priority] - priorityWeightMap[a.priority])
+            } else if (type === 'dueDate') {
+                newTaskList.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+            }
+
+            this.taskList = newTaskList
+            this.saveToLocalStorage()
+        },
+
+        resetSort() {
+            this.currentSortType = ''
+            this.fetchTaskList()
+        },
+
+        saveToLocalStorage() {
+            localStorage.setItem('taskList', JSON.stringify(this.taskList))
+            localStorage.setItem('deletedTasks', JSON.stringify(this.deletedTasks))
         }
     }
 })

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, onMounted, onUnmounted } from 'vue'
 
-
 const props = defineProps<{
   visible: boolean
   x: number
@@ -10,30 +9,30 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'create-textbox'): void
-  (e: 'close'): void // 关闭菜单
+  (e: 'close'): void
 }>()
 
-function handleDocumentClick() {
+const handleDocumentClick = () => {
   emit('close')
 }
 
-function onMountedCallback() {
+onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
-}
+})
 
-function onUnmountedCallback() {
+onUnmounted(() => {
   document.removeEventListener('click', handleDocumentClick)
-}
-
-onMounted(onMountedCallback)
-onUnmounted(onUnmountedCallback)
-
+})
 </script>
 
 <template>
-  <div class="right-menu" v-if="props.visible"
-      :style="{left: props.x + 'px',top: props.y + 'px'}" @click.stop>
-    <div class="menu-item" @click="function() { emit('create-textbox') }">新建文本框</div>
+  <div
+      class="right-menu"
+      v-if="visible"
+      :style="{ left: `${x}px`, top: `${y}px` }"
+      @click.stop
+  >
+    <div class="menu-item" @click="emit('create-textbox')">新建文本框</div>
   </div>
 </template>
 
@@ -49,5 +48,4 @@ onUnmounted(onUnmountedCallback)
 .menu-item {
   cursor: pointer;
 }
-
 </style>

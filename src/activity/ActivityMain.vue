@@ -4,7 +4,6 @@
   <div class="activity-main">
     <div class="left-bar">
       <div class="left-bar-top">
-        <!-- 基础功能区 -->
         <div class="task-list-btn">任务列表</div>
         <div class="task-filter">
           <div
@@ -16,10 +15,10 @@
           </div>
           <div
               class="filter-item"
-              :class="{ active: activeFilter === 'todo' }"
-              @click="changeFilter('todo')"
+              :class="{ active: activeFilter === 'memo' }"
+              @click="changeFilter('memo')"
           >
-            待办
+            备忘录
           </div>
           <div
               class="filter-item"
@@ -37,13 +36,11 @@
           </div>
         </div>
 
-        <!-- VIP功能区（新增回收站按钮） -->
         <div class="task-list-btn">VIP功能</div>
         <div class="task-filter">
           <button class="flowchart-btn filter-item" @click="switchToFlowChart">
             <span class="left_bar-font">流程图</span>
           </button>
-          <!-- 新增：回收站按钮 -->
           <button class="recycle-bin-btn filter-item" @click="switchToRecycleBin">
             <span class="left_bar-font">回收站</span>
           </button>
@@ -58,8 +55,7 @@
           :active-filter="activeFilter"
           @open-new-task-modal="openNewTaskModal"
       />
-      <!-- 新增：回收站页面渲染 -->
-      <RecycleBin v-if="activePage === 'recycleBin'" />
+      <RecycleBin v-if="activePage === 'recycle'" />
     </div>
 
     <NewTaskModal
@@ -75,11 +71,9 @@ import { ref, onMounted } from 'vue'
 import FlowChart from '../leftBarActivity/FlowChart.vue'
 import TaskList from '../task/TaskList.vue'
 import NewTaskModal from '../task/NewTaskModal.vue'
-// 新增：导入回收站组件
-import RecycleBin from '../views/RecycleBin.vue'
+import RecycleBin from '../leftBarActivity/RecycleBin.vue'
 import { useTaskStore } from '../store/taskStore'
 
-// 新增：activePage添加'recycleBin'状态
 const activePage = ref('flowchart')
 const activeFilter = ref('all')
 const showNewTaskModal = ref(false)
@@ -93,9 +87,8 @@ const switchToFlowChart = () => {
   activePage.value = 'flowchart'
 }
 
-// 新增：切换到回收站页面
-const switchToRecycleBin = () => {
-  activePage.value = 'recycleBin'
+const switchToRecycle = () => {
+  activePage.value = 'recycle'
 }
 
 const changeFilter = (filter: string) => {
@@ -112,7 +105,17 @@ const closeNewTaskModal = () => {
 }
 
 const saveNewTask = (newTask: any) => {
-  taskStore.addTask(newTask)
+  if (newTask.type === 'memo') {
+    newTask.status = 'memo'
+    taskStore.addTask(newTask)
+    activeFilter.value = 'memo'
+    activePage.value = 'taskList'
+  } else if (newTask.type === 'task') {
+    newTask.status = 'doing'
+    taskStore.addTask(newTask)
+    activeFilter.value = 'doing'
+    activePage.value = 'taskList'
+  }
   showNewTaskModal.value = false
 }
 </script>

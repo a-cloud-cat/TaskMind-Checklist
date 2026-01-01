@@ -1,0 +1,17 @@
+[33mcommit dc4804f34cdc87deb2d7bfb284ef9528ad811372[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: a-cloud-cat <2315310091@qq.com>
+Date:   Tue Dec 30 18:37:19 2025 +0800
+
+    新增用户登陆持久化功能（pinia），优化主页面显示内容，初步构造任务使用框架
+
+[33mcommit 9dfb951f134ae902cb2aec8359c569e6aa28eda4[m
+Author: a-cloud-cat <2315310091@qq.com>
+Date:   Mon Dec 29 21:54:12 2025 +0800
+
+    增加了全局导航栏，大幅度优化了首页和登陆界面，微调了主页面组件
+
+[33mcommit 42bf474c61721cb95cfc891fcf67d66de2d2225c[m
+Author: a-cloud-cat <2315310091@qq.com>
+Date:   Thu Dec 25 00:20:02 2025 +0800
+
+    完成了项目初始布局以及登陆功能，待后续填充具体功能
